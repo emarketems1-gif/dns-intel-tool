@@ -57,8 +57,8 @@
             document.getElementById('progressBox').style.display = 'block';
             startBtn.disabled = true;
 
-            // PERFORMANCE BOOST: Increased batch size to 150
-            await processInBatches(domains, 150);
+            // PERFORMANCE BOOST: Increased batch size to 300
+            await processInBatches(domains, 300);
         };
 
         async function processInBatches(domains, batchSize) {
