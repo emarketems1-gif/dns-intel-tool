@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Intelligence SPF Extractor</title>
+    <script src="https://cdn.jsdelivr.net/npm/tldts@6.1.47/dist/index.umd.min.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f4f7f6; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .progress-box { margin-top: 20px; display: none; }
+        progress { width: 100%; height: 25px; }
+        #log { font-family: monospace; font-size: 12px; background: #222; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; margin-top: 10px; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>SPF TXT Intelligence Extractor</h2>
+        <p>Upload a TXT/CSV (one domain per line). This tool extracts root domains from <b>a:</b> and <b>mx:</b> mechanisms.</p>
+        <input type="file" id="fileInput" accept=".txt,.csv">
+        <button id="startBtn">Start Processing</button>
+
+        <div class="progress-box" id="progressBox">
+            <p>Processing: <span id="count">0</span> / <span id="total">0</span></p>
+            <progress id="progressBar" value="0" max="100"></progress>
+            <div id="log"></div>
+            <br>
+            <button id="downloadBtn" style="background: #28a745; display: none;">Download CSV Results</button>
+        </div>
+    </div>
+
+    <script>
+        const { getDomain } = window.tldts;
+        let results = ["domain,TYPE,record,domain_extracted"];
+        let isProcessing = false;
+
+        document.getElementById('startBtn').onclick = async () => {
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return alert("Select a file first!");
+
+            const text = await file.text();
+            const domains = text.split(/\r?\n/).map(d => d.trim()).filter(d => d);
+            
+            document.getElementById('total').innerText = domains.length;
+            document.getElementById('progressBox').style.display = 'block';
+            document.getElementById('startBtn').disabled = true;
+            
+            await processInBatches(domains, 50); // Process 50 domains at a time
+        };
+
+        async function processInBatches(domains, batchSize) {
+            for (let i = 0; i < domains.length; i += batchSize) {
+                const batch = domains.slice(i, i + batchSize);
+                await Promise.all(batch.map(d => fetchDNS(d)));
+                
+                // Update Progress
+                const progress = ((i + batch.length) / domains.length) * 100;
+                document.getElementById('progressBar').value = progress;
+                document.getElementById('count').innerText = i + batch.length;
+            }
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+            addLog("✅ Completed!");
+        }
+
+        async function fetchDNS(domain) {
+            try {
+                const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT`, {
+                    headers: { 'Accept': 'application/dns-json' }
+                });
+                const data = await response.json();
+                
+                if (data.Answer) {
+                    data.Answer.forEach(ans => {
+                        if (ans.type === 16) { // TXT record
+                            const rawRecord = ans.data.replace(/"/g, '');
+                            if (rawRecord.includes("v=spf1")) {
+                                parseSPF(domain, rawRecord);
+                            }
+                        }
+                    });
+                }
+            } catch (e) {
+                addLog(`Error querying ${domain}`);
+            }
+        }
+
+        function parseSPF(domain, record) {
+            const parts = record.split(/\s+/);
+            let aDomains = [];
+            let mxDomains = [];
+
+            parts.forEach(part => {
+                // Extract 'a' mechanisms
+                if (part.startsWith('a:') || part === 'a') {
+                    let target = part === 'a' ? domain : part.split(':')[1];
+                    let root = getDomain(target);
+                    if (root) aDomains.push(root.toLowerCase());
+                }
+                // Extract 'mx' mechanisms
+                if (part.startsWith('mx:') || part === 'mx') {
+                    let target = part === 'mx' ? domain : part.split(':')[1];
+                    let root = getDomain(target);
+                    if (root) mxDomains.push(root.toLowerCase());
+                }
+            });
+
+            // Deduplicate and format
+            if (aDomains.length > 0) {
+                const uniqueA = [...new Set(aDomains)].join(';');
+                results.push(`"${domain}","A","${record}","${uniqueA}"`);
+            }
+            if (mxDomains.length > 0) {
+                const uniqueMX = [...new Set(mxDomains)].join(';');
+                results.push(`"${domain}","MX","${record}","${uniqueMX}"`);
+            }
+        }
+
+        function addLog(msg) {
+            const log = document.getElementById('log');
+            log.innerText += msg + "\n";
+            log.scrollTop = log.scrollHeight;
+        }
+
+        document.getElementById('downloadBtn').onclick = () => {
+            const blob = new Blob([results.join('\n')], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dns_intelligence_${Date.now()}.csv`;
+            a.click();
+        };
+    </script>
+</body>
+</html>
