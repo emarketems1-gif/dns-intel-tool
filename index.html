@@ -86,27 +86,32 @@
             }
         }
 
-        function parseSPF(domain, record) {
+		function parseSPF(domain, record) {
             const parts = record.split(/\s+/);
             let aDomains = [];
             let mxDomains = [];
 
             parts.forEach(part => {
-                // Extract 'a' mechanisms
-                if (part.startsWith('a:') || part === 'a') {
-                    let target = part === 'a' ? domain : part.split(':')[1];
-                    let root = getDomain(target);
-                    if (root) aDomains.push(root.toLowerCase());
+                // STRICTOR A: Only matches "a:something.com"
+                if (part.startsWith('a:')) {
+                    let target = part.split(':')[1];
+                    if (target) {
+                        let root = getDomain(target);
+                        if (root) aDomains.push(root.toLowerCase());
+                    }
                 }
-                // Extract 'mx' mechanisms
-                if (part.startsWith('mx:') || part === 'mx') {
-                    let target = part === 'mx' ? domain : part.split(':')[1];
-                    let root = getDomain(target);
-                    if (root) mxDomains.push(root.toLowerCase());
+                
+                // STRICTOR MX: Only matches "mx:something.com"
+                if (part.startsWith('mx:')) {
+                    let target = part.split(':')[1];
+                    if (target) {
+                        let root = getDomain(target);
+                        if (root) mxDomains.push(root.toLowerCase());
+                    }
                 }
             });
 
-            // Deduplicate and format
+            // Only add to results if we actually found something
             if (aDomains.length > 0) {
                 const uniqueA = [...new Set(aDomains)].join(';');
                 results.push(`"${domain}","A","${record}","${uniqueA}"`);
