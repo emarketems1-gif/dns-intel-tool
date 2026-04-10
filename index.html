@@ -3,66 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNS Intelligence SPF Extractor</title>
+    <title>High-Speed DNS Intelligence</title>
     <script src="https://cdn.jsdelivr.net/npm/tldts@6.1.47/dist/index.umd.min.js"></script>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #f4f7f6; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; line-height: 1.6; background: #0e1217; color: #fff; }
+        .card { background: #1c2128; padding: 30px; border-radius: 12px; border: 1px solid #30363d; }
         .progress-box { margin-top: 20px; display: none; }
-        progress { width: 100%; height: 25px; }
-        #log { font-family: monospace; font-size: 12px; background: #222; color: #0f0; padding: 10px; height: 200px; overflow-y: scroll; margin-top: 10px; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:disabled { background: #ccc; }
+        progress { width: 100%; height: 20px; border-radius: 10px; }
+        #log { font-family: monospace; font-size: 12px; background: #000; color: #00ff00; padding: 15px; height: 150px; overflow-y: scroll; margin-top: 10px; border-radius: 4px; }
+        button { background: #238636; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #30363d; color: #8b949e; cursor: not-allowed; }
+        .download-zone { margin-top: 20px; display: flex; gap: 10px; }
+        .dl-btn { background: #1f6feb; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>SPF TXT Intelligence Extractor</h2>
-        <p>Upload a TXT/CSV (one domain per line). This tool extracts root domains from <b>a:</b> and <b>mx:</b> mechanisms.</p>
+        <h2>🚀 Ultra-Fast DNS Intelligence</h2>
+        <p>Optimized for 1M+ domains. Processes batches in parallel via Cloudflare DNS.</p>
+        
         <input type="file" id="fileInput" accept=".txt,.csv">
-        <button id="startBtn">Start Processing</button>
+        <button id="startBtn">Launch Engine</button>
 
         <div class="progress-box" id="progressBox">
-            <p>Processing: <span id="count">0</span> / <span id="total">0</span></p>
+            <p>Processed: <b id="count">0</b> / <b id="total">0</b> domains</p>
             <progress id="progressBar" value="0" max="100"></progress>
-            <div id="log"></div>
-            <br>
-            <button id="downloadBtn" style="background: #28a745; display: none;">Download CSV Results</button>
+            <div id="log">Engine initialized...</div>
+            
+            <div class="download-zone">
+                <button id="dlSheet1" class="dl-btn" style="display: none;">Download Sheet 1 (All TXT)</button>
+                <button id="dlSheet2" class="dl-btn" style="display: none;">Download Sheet 2 (Extracted Only)</button>
+            </div>
         </div>
     </div>
 
     <script>
         const { getDomain } = window.tldts;
-        let results = ["domain,TYPE,record,domain_extracted"];
-        let isProcessing = false;
+        let sheet1 = ["domain,TXT_Record"];
+        let sheet2 = ["domain,TYPE,extracted_root_domain"];
+        
+        const startBtn = document.getElementById('startBtn');
+        const dl1 = document.getElementById('dlSheet1');
+        const dl2 = document.getElementById('dlSheet2');
 
-        document.getElementById('startBtn').onclick = async () => {
+        startBtn.onclick = async () => {
             const file = document.getElementById('fileInput').files[0];
-            if (!file) return alert("Select a file first!");
+            if (!file) return alert("Select a file!");
 
             const text = await file.text();
             const domains = text.split(/\r?\n/).map(d => d.trim()).filter(d => d);
             
             document.getElementById('total').innerText = domains.length;
             document.getElementById('progressBox').style.display = 'block';
-            document.getElementById('startBtn').disabled = true;
-            
-            await processInBatches(domains, 50); // Process 50 domains at a time
+            startBtn.disabled = true;
+
+            // PERFORMANCE BOOST: Increased batch size to 150
+            await processInBatches(domains, 150);
         };
 
         async function processInBatches(domains, batchSize) {
             for (let i = 0; i < domains.length; i += batchSize) {
                 const batch = domains.slice(i, i + batchSize);
+                // Run all items in the batch simultaneously
                 await Promise.all(batch.map(d => fetchDNS(d)));
                 
-                // Update Progress
                 const progress = ((i + batch.length) / domains.length) * 100;
                 document.getElementById('progressBar').value = progress;
                 document.getElementById('count').innerText = i + batch.length;
             }
-            document.getElementById('downloadBtn').style.display = 'inline-block';
-            addLog("✅ Completed!");
-        }
+            addLog("✨ Job Finished!");
+            dl1.style.display = 'block';
+            dl2.style.display = 'block';
+        };
 
         async function fetchDNS(domain) {
             try {
@@ -73,69 +85,62 @@
                 
                 if (data.Answer) {
                     data.Answer.forEach(ans => {
-                        if (ans.type === 16) { // TXT record
-                            const rawRecord = ans.data.replace(/"/g, '');
-                            if (rawRecord.includes("v=spf1")) {
-                                parseSPF(domain, rawRecord);
+                        if (ans.type === 16) { 
+                            const record = ans.data.replace(/"/g, '').trim();
+                            
+                            // SHEET 1: All TXT records for this domain
+                            sheet1.push(`"${domain}","${record}"`);
+                            
+                            // SHEET 2: Targeted Intelligence
+                            if (record.includes("v=spf1")) {
+                                parseIntelligence(domain, record);
                             }
                         }
                     });
                 }
-            } catch (e) {
-                addLog(`Error querying ${domain}`);
-            }
+            } catch (e) { /* Skip errors for speed */ }
         }
 
-		function parseSPF(domain, record) {
+        function parseIntelligence(domain, record) {
             const parts = record.split(/\s+/);
-            let aDomains = [];
-            let mxDomains = [];
+            let aSet = new Set();
+            let mxSet = new Set();
 
             parts.forEach(part => {
-                // STRICTOR A: Only matches "a:something.com"
                 if (part.startsWith('a:')) {
                     let target = part.split(':')[1];
-                    if (target) {
-                        let root = getDomain(target);
-                        if (root) aDomains.push(root.toLowerCase());
-                    }
+                    let root = getDomain(target);
+                    if (root) aSet.add(root.toLowerCase());
                 }
-                
-                // STRICTOR MX: Only matches "mx:something.com"
                 if (part.startsWith('mx:')) {
                     let target = part.split(':')[1];
-                    if (target) {
-                        let root = getDomain(target);
-                        if (root) mxDomains.push(root.toLowerCase());
-                    }
+                    let root = getDomain(target);
+                    if (root) mxSet.add(root.toLowerCase());
                 }
             });
 
-            // Only add to results if we actually found something
-            if (aDomains.length > 0) {
-                const uniqueA = [...new Set(aDomains)].join(';');
-                results.push(`"${domain}","A","${record}","${uniqueA}"`);
-            }
-            if (mxDomains.length > 0) {
-                const uniqueMX = [...new Set(mxDomains)].join(';');
-                results.push(`"${domain}","MX","${record}","${uniqueMX}"`);
-            }
+            aSet.forEach(root => sheet2.push(`"${domain}","A","${root}"`));
+            mxSet.forEach(root => sheet2.push(`"${domain}","MX","${root}"`));
         }
 
         function addLog(msg) {
             const log = document.getElementById('log');
-            log.innerText += msg + "\n";
+            log.innerText += "\n" + msg;
             log.scrollTop = log.scrollHeight;
         }
 
-        document.getElementById('downloadBtn').onclick = () => {
-            const blob = new Blob([results.join('\n')], { type: 'text/csv' });
+        // DOWNLOAD LOGIC
+        function download(data, filename) {
+            const blob = new Blob([data.join('\n')], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `dns_intelligence_${Date.now()}.csv`;
+            a.download = filename;
             a.click();
-        };
+        }
+
+        dl1.onclick = () => download(sheet1, `sheet1_all_txt_${Date.now()}.csv`);
+        dl2.onclick = () => download(sheet2, `sheet2_extracted_${Date.now()}.csv`);
     </script>
 </body>
 </html>
