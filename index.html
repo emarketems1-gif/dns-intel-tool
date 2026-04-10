@@ -3,209 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNS Intel Pro | Extreme Scale Processor</title>
+    <title>DNS Intel Pro | 20M+ Auto-Save Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/tldts@6.1.47/dist/index.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg: #0d1117;
-            --card-bg: #161b22;
-            --border: #30363d;
-            --primary: #238636;
-            --primary-hover: #2ea043;
-            --secondary: #1f6feb;
-            --accent: #58a6ff;
-            --text: #c9d1d9;
-            --success: #3fb950;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1100px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 20px 0;
-        }
-
-        header h1 {
-            font-size: 2rem;
-            margin: 0;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        header p { color: #8b949e; margin-top: 8px; }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        /* Responsive Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .stat-item {
-            background: rgba(0,0,0,0.2);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .stat-item span { display: block; font-size: 0.85rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-item b { display: block; font-size: 1.8rem; color: var(--accent); margin-top: 5px; }
-
-        /* File Upload Area */
-        .upload-section {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            transition: 0.3s;
-            margin-bottom: 20px;
-        }
-
-        .upload-section:hover { border-color: var(--accent); background: rgba(88, 166, 255, 0.05); }
-
+        :root { --bg: #0d1117; --card-bg: #161b22; --border: #30363d; --primary: #238636; --accent: #58a6ff; --text: #c9d1d9; --success: #3fb950; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-item { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .stat-item span { display: block; font-size: 0.75rem; color: #8b949e; text-transform: uppercase; }
+        .stat-item b { display: block; font-size: 1.5rem; color: var(--accent); margin-top: 5px; }
+        .upload-section { border: 2px dashed var(--border); border-radius: 12px; padding: 30px; text-align: center; margin-bottom: 20px; }
         input[type="file"] { display: none; }
-        .custom-file-upload {
-            background: var(--secondary);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-
-        /* Controls */
-        .controls { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-top: 20px; }
-
-        button {
-            border: none;
-            padding: 14px 30px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: 0.2s;
-            font-size: 1rem;
-        }
-
-        #startBtn { background: var(--primary); color: white; width: 100%; max-width: 300px; justify-content: center; }
-        #startBtn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-        #startBtn:disabled { background: var(--border); color: #484f58; transform: none; }
-
-        .dl-btn { background: #21262d; border: 1px solid var(--border); color: var(--text); }
-        .dl-btn:hover { background: #30363d; border-color: #8b949e; }
-
-        /* Progress Bar */
-        .progress-container { margin: 25px 0; display: none; }
-        progress { width: 100%; height: 10px; border-radius: 5px; overflow: hidden; }
-        progress::-webkit-progress-bar { background: var(--border); }
-        progress::-webkit-progress-value { background: var(--success); }
-
-        /* Terminal Log */
-        .terminal {
-            background: #000;
-            border-radius: 8px;
-            padding: 15px;
-            font-family: 'Fira Code', 'Courier New', monospace;
-            font-size: 12px;
-            color: var(--success);
-            height: 180px;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            line-height: 1.5;
-        }
-
-        @media (max-width: 600px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            header h1 { font-size: 1.5rem; }
-        }
+        .custom-file-upload { background: #1f6feb; color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-block; }
+        button { border: none; padding: 14px 30px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; transition: 0.2s; font-size: 1rem; }
+        #startBtn { background: var(--primary); color: white; margin-bottom: 10px; }
+        #startBtn:disabled { background: var(--border); color: #484f58; cursor: not-allowed; }
+        .terminal { background: #000; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 12px; color: var(--success); height: 150px; overflow-y: auto; border: 1px solid var(--border); }
+        progress { width: 100%; height: 8px; accent-color: var(--success); margin: 15px 0; }
+        .badge { background: #f85149; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; vertical-align: middle; margin-left: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1><i class="fas fa-shield-virus"></i> DNS Intel Pro</h1>
-        <p>Advanced SPF & TXT Intelligence Extractor</p>
-    </header>
-
     <div class="card">
-        <div class="upload-section" id="dropZone">
-            <i class="fas fa-cloud-upload-alt fa-3x" style="margin-bottom: 15px; color: var(--accent);"></i>
-            <br>
-            <label for="fileInput" class="custom-file-upload">Choose Domain List</label>
-            <input type="file" id="fileInput" accept=".txt,.csv">
-            <p id="fileName" style="font-size: 0.9rem; color: #8b949e;">No file selected (TXT or CSV)</p>
+        <h2 style="margin:0 0 10px 0;"><i class="fas fa-bolt"></i> DNS Hyper-Processor <span class="badge">AUTO-SAVE ENABLED</span></h2>
+        <p style="color: #8b949e; margin-bottom: 20px;">System will auto-download results every 1,000,000 domains to prevent crashes.</p>
+        
+        <div class="upload-section">
+            <label for="fileInput" class="custom-file-upload">Upload Massive List</label>
+            <input type="file" id="fileInput">
+            <p id="fileName" style="margin-top:10px; font-size:0.9rem;">No file selected</p>
         </div>
 
         <div class="stats-grid">
-            <div class="stat-item"><span>Total Tasks</span><b id="total">0</b></div>
+            <div class="stat-item"><span>Total Domains</span><b id="total">0</b></div>
             <div class="stat-item"><span>Processed</span><b id="count">0</b></div>
-            <div class="stat-item"><span>Throughput</span><b id="speed">0/s</b></div>
+            <div class="stat-item"><span>Speed</span><b id="speed">0/s</b></div>
+            <div class="stat-item"><span>Chunks Saved</span><b id="chunks">0</b></div>
         </div>
 
-        <div class="progress-container" id="progCont">
-            <progress id="progressBar" value="0" max="100"></progress>
-        </div>
-
-        <button id="startBtn"><i class="fas fa-play"></i> Initialize Engine</button>
-
-        <div class="controls">
-            <button id="dlSheet1" class="dl-btn" style="display: none;"><i class="fas fa-file-csv"></i> Download Master TXT</button>
-            <button id="dlSheet2" class="dl-btn" style="display: none;"><i class="fas fa-project-diagram"></i> Download SPF Intel</button>
-        </div>
+        <progress id="progressBar" value="0" max="100"></progress>
+        <button id="startBtn">START 20M+ ENGINE</button>
     </div>
 
-    <div class="terminal" id="log">SYSTEM READY. AWAITING INPUT...</div>
+    <div class="terminal" id="log">SYSTEM READY. AUTO-SAVE ACTIVE AT 1M INTERVALS.</div>
 </div>
 
 <script>
     const { getDomain } = window.tldts;
     let sheet1 = ["domain,TXT_Record"];
     let sheet2 = ["domain,TYPE,extracted_root_domain"];
+    
     let startTime;
+    let totalProcessed = 0;
+    let chunkCount = 0;
+    const SAVE_INTERVAL = 1000000; // AUTO-SAVE EVERY 1 MILLION
 
     const fileInput = document.getElementById('fileInput');
-    const fileNameDisplay = document.getElementById('fileName');
     const startBtn = document.getElementById('startBtn');
     const logEl = document.getElementById('log');
 
-    fileInput.onchange = () => {
-        if(fileInput.files[0]) fileNameDisplay.innerText = `Ready: ${fileInput.files[0].name}`;
-    };
+    fileInput.onchange = () => { if(fileInput.files[0]) document.getElementById('fileName').innerText = fileInput.files[0].name; };
 
     startBtn.onclick = async () => {
         const file = fileInput.files[0];
@@ -215,32 +77,28 @@
         const domains = text.split(/\r?\n/).map(d => d.trim()).filter(d => d);
         
         document.getElementById('total').innerText = domains.length.toLocaleString();
-        document.getElementById('progCont').style.display = 'block';
-        addLog(`> Starting batch process of ${domains.length} domains...`);
+        addLog(`> Engine Started. Target: ${domains.length} domains.`);
         
         startTime = Date.now();
         startBtn.disabled = true;
 
-        await processInBatches(domains, 300);
+        await processInChunks(domains, 300);
     };
 
-    async function processInBatches(domains, batchSize) {
+    async function processInChunks(domains, batchSize) {
         for (let i = 0; i < domains.length; i += batchSize) {
             const batch = domains.slice(i, i + batchSize);
             await Promise.all(batch.map((d, idx) => fetchDNS(d, idx % 2 === 0 ? 'cloudflare' : 'google')));
             
-            const processed = i + batch.length;
-            const speed = Math.round(processed / ((Date.now() - startTime) / 1000));
-            
-            document.getElementById('progressBar').value = (processed / domains.length) * 100;
-            document.getElementById('count').innerText = processed.toLocaleString();
-            document.getElementById('speed').innerText = speed + "/s";
-            
-            if(i % 3000 === 0) addLog(`> Checkpoint: ${processed} domains handled...`);
+            totalProcessed += batch.length;
+            updateUI(domains.length);
+
+            // AUTO-SAVE LOGIC
+            if (totalProcessed % SAVE_INTERVAL === 0 || totalProcessed === domains.length) {
+                triggerAutoSave();
+            }
         }
-        addLog("✨ ENGINE COMPLETE. ALL DATA CACHED.");
-        document.getElementById('dlSheet1').style.display = 'flex';
-        document.getElementById('dlSheet2').style.display = 'flex';
+        addLog("✨ PROCESS FULLY COMPLETE.");
     }
 
     async function fetchDNS(domain, provider) {
@@ -268,16 +126,39 @@
         let aSet = new Set(), mxSet = new Set();
         parts.forEach(part => {
             if (part.startsWith('a:')) {
-                let root = getDomain(part.split(':')[1]);
+                let target = part.split(':')[1];
+                let root = getDomain(target);
                 if (root) aSet.add(root.toLowerCase());
             }
             if (part.startsWith('mx:')) {
-                let root = getDomain(part.split(':')[1]);
+                let target = part.split(':')[1];
+                let root = getDomain(target);
                 if (root) mxSet.add(root.toLowerCase());
             }
         });
         aSet.forEach(root => sheet2.push(`"${domain}","A","${root}"`));
         mxSet.forEach(root => sheet2.push(`"${domain}","MX","${root}"`));
+    }
+
+    function triggerAutoSave() {
+        chunkCount++;
+        addLog(`> [AUTO-SAVE] Saving Chunk #${chunkCount} at ${totalProcessed} domains...`);
+        
+        download(sheet1, `TXT_Master_Part_${chunkCount}.csv`);
+        download(sheet2, `SPF_Intel_Part_${chunkCount}.csv`);
+        
+        // RESET MEMORY TO PREVENT CRASH
+        sheet1 = ["domain,TXT_Record"];
+        sheet2 = ["domain,TYPE,extracted_root_domain"];
+        
+        document.getElementById('chunks').innerText = chunkCount;
+    }
+
+    function updateUI(total) {
+        const speed = Math.round(totalProcessed / ((Date.now() - startTime) / 1000));
+        document.getElementById('progressBar').value = (totalProcessed / total) * 100;
+        document.getElementById('count').innerText = totalProcessed.toLocaleString();
+        document.getElementById('speed').innerText = speed + "/s";
     }
 
     function addLog(msg) {
@@ -292,11 +173,8 @@
         a.href = url;
         a.download = filename;
         a.click();
+        window.URL.revokeObjectURL(url);
     }
-
-    document.getElementById('dlSheet1').onclick = () => download(sheet1, `TXT_Master.csv`);
-    document.getElementById('dlSheet2').onclick = () => download(sheet2, `SPF_Intelligence.csv`);
 </script>
-
 </body>
 </html>
